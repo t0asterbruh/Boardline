@@ -40,5 +40,8 @@ Persistent webpage at https://collab-whiteboard-493sz0zzz-t0asterbruhs-projects.
 - Vercel (client)
 - Render (server)
 
+## License
+- MIT — free to modify and fork.
+
 ## Author
 - Martin Dumbliauskas
