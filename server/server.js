@@ -22,7 +22,6 @@ const io = new Server(server, {
 // ====== MongoDB Setup ======
 const mongoURI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log("Server running"));
 
 mongoose
     .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
