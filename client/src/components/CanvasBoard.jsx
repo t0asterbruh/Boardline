@@ -1,11 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
-// Point this to your server
 const socket = io(process.env.REACT_APP_SERVER_URL, {
     transports: ["websocket"],
 });
-
 
 const CanvasBoard = ({ boardId }) => {
     const canvasRef = useRef(null);
@@ -13,20 +11,18 @@ const CanvasBoard = ({ boardId }) => {
     const isDrawingRef = useRef(false);
 
     const [isDrawing, setIsDrawing] = useState(false);
-    const [tool, setTool] = useState("pencil");
     const [color, setColor] = useState("#000000");
     const [lineWidth, setLineWidth] = useState(3);
     const [darkMode, setDarkMode] = useState(false);
     const [undoStack, setUndoStack] = useState([]);
     const [redoStack, setRedoStack] = useState([]);
-    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
         isDrawingRef.current = isDrawing;
     }, [isDrawing]);
 
 
-    // --- Canvas setup ---
+    // canvas
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
@@ -34,12 +30,12 @@ const CanvasBoard = ({ boardId }) => {
         ctx.lineJoin = "round";
         ctxRef.current = ctx;
 
-        // Set an initial size once (no listener here)
+        // init size
         canvas.width = window.innerWidth * .85;
         canvas.height = window.innerHeight * .85;
     }, []);
 
-    // --- Socket setup ---
+    // sockets
     useEffect(() => {
         socket.emit("joinBoard", boardId);
 
@@ -53,7 +49,6 @@ const CanvasBoard = ({ boardId }) => {
             ctx.lineTo(x1, y1);
             ctx.stroke();
         });
-
 
         socket.on("boardState", ({ image }) => restoreState(image));
 
@@ -70,8 +65,8 @@ const CanvasBoard = ({ boardId }) => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.closePath();
             ctx.restore();
-
-            // ✅ Double-force a repaint to flush GPU buffer
+            
+            // double force because it doesn't work otherwise
             requestAnimationFrame(() => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             });
@@ -95,31 +90,30 @@ const CanvasBoard = ({ boardId }) => {
         };
     }, [boardId]);
 
+    // resize canvas on window resize
     useEffect(() => {
         const handleResize = () => {
             const canvas = canvasRef.current;
             const ctx = ctxRef.current;
             if (!canvas || !ctx) return;
 
-            // Save current drawing
             const data = canvas.toDataURL();
 
-            // Resize canvas
             canvas.width = window.innerWidth * .85;
             canvas.height = window.innerHeight * .85;
 
-            // Restore the drawing
             const img = new Image();
             img.onload = () => ctx.drawImage(img, 0, 0);
-            ctx.beginPath();       // reset current drawing path
+            ctx.beginPath();      
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            ctx.lineWidth = lineWidth;  // restore line width
-            ctx.strokeStyle = color;    // restore color
+            ctx.lineWidth = lineWidth;  
+            ctx.strokeStyle = color;   
             img.src = data;
         };
 
         window.addEventListener("resize", handleResize);
+
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
@@ -127,8 +121,8 @@ const CanvasBoard = ({ boardId }) => {
     // board persist
     useEffect(() => {
         socket.emit("joinBoard", boardId);
-
-        // Explicitly ask for current board data (optional redundancy)
+        
+        // extra image req because honestly why not
         socket.emit("requestState", boardId);
 
         socket.on("boardState", ({ image }) => {
@@ -150,13 +144,14 @@ const CanvasBoard = ({ boardId }) => {
         };
     }, [boardId]);
 
-
+    // save
     const saveState = () => {
         const data = canvasRef.current.toDataURL();
         setUndoStack((prev) => [...prev, data]);
         setRedoStack([]);
     };
 
+    // restore on refreshes
     const restoreState = (dataUrl) => {
         if (!dataUrl) return;
         const canvas = canvasRef.current;
@@ -169,27 +164,25 @@ const CanvasBoard = ({ boardId }) => {
         img.src = dataUrl;
     };
 
+    // mouse down
     const startDrawing = (e) => {
         const { offsetX, offsetY } = e.nativeEvent;
         const ctx = ctxRef.current;
         if (!ctx) return;
 
-        // Prepare to draw immediately
         isDrawingRef.current = true;
         setIsDrawing(true);
 
-        // Begin new path
         ctx.beginPath();
         ctx.moveTo(offsetX, offsetY);
 
-        // Reset previous coordinates tracker
         delete draw.prevX;
         delete draw.prevY;
 
-        // Save state for undo
         saveState();
     };
 
+    // actual drawing
     const draw = (e) => {
         if (!isDrawingRef.current) return;
 
@@ -197,19 +190,17 @@ const CanvasBoard = ({ boardId }) => {
         const ctx = ctxRef.current;
         if (!ctx) return;
 
-        // Initialize previous position if needed
+        // just in case prevX/Y bugs out, re init position
         if (typeof draw.prevX === "undefined" || typeof draw.prevY === "undefined") {
             draw.prevX = offsetX;
             draw.prevY = offsetY;
         }
 
-        // Draw locally
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.lineTo(offsetX, offsetY);
         ctx.stroke();
 
-        // Emit live line segment
         socket.emit("draw", {
             boardId,
             x0: draw.prevX,
@@ -220,14 +211,12 @@ const CanvasBoard = ({ boardId }) => {
             lineWidth,
         });
 
-        // Update previous coordinates
         draw.prevX = offsetX;
         draw.prevY = offsetY;
     };
 
-
+    // mouse up
     const stopDrawing = () => {
-        // Always clean up regardless of ref state
         isDrawingRef.current = false;
         setIsDrawing(false);
         delete draw.prevX;
@@ -236,7 +225,6 @@ const CanvasBoard = ({ boardId }) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // Close current path and sync
         const ctx = ctxRef.current;
         if (ctx) ctx.closePath();
 
@@ -244,6 +232,7 @@ const CanvasBoard = ({ boardId }) => {
         socket.emit("applyState", { boardId, image });
     };
 
+    // undo
     const undo = async () => {
         if (!undoStack.length) return;
 
@@ -260,7 +249,6 @@ const CanvasBoard = ({ boardId }) => {
         setRedoStack([...redoStack, current]);
         setUndoStack([...undoStack]);
 
-        // ✅ Decode and paint immediately
         try {
             const blob = await (await fetch(last)).blob();
             const bitmap = await createImageBitmap(blob);
@@ -270,10 +258,10 @@ const CanvasBoard = ({ boardId }) => {
             console.error("Undo decode failed", e);
         }
 
-        // ✅ Notify server right away
         socket.emit("applyState", { boardId, image: last });
     };
 
+    //redo
     const redo = async () => {
         if (!redoStack.length) return;
 
@@ -290,7 +278,6 @@ const CanvasBoard = ({ boardId }) => {
         setUndoStack([...undoStack, current]);
         setRedoStack([...redoStack]);
 
-        // ✅ Decode and paint immediately
         try {
             const blob = await (await fetch(next)).blob();
             const bitmap = await createImageBitmap(blob);
@@ -300,10 +287,10 @@ const CanvasBoard = ({ boardId }) => {
             console.error("Redo decode failed", e);
         }
 
-        // ✅ Notify server right away
         socket.emit("applyState", { boardId, image: next });
     };
 
+    // clear
     const clearCanvas = () => {
         isDrawingRef.current = false;
         setIsDrawing(false);
@@ -315,7 +302,6 @@ const CanvasBoard = ({ boardId }) => {
         const image = canvas.toDataURL();
         socket.emit("applyState", { boardId, image });
     };
-
 
     return (
         <div className={`${darkMode ? "bg-stone-900 text-white" : "bg-gray-100 text-black"} min-h-screen flex flex-col items-center`}>
@@ -343,8 +329,8 @@ const CanvasBoard = ({ boardId }) => {
                     type="color"
                     value={color}
                     onChange={(e) => setColor(e.target.value)}
-                    className={`w-10 h-10 rounded-md appearance-none cursor-pointer border-none outline-none p-0 ${darkMode ? "bg-[#1e1e1e]" : "bg-white"
-                        }`}
+                    className={`w-10 h-10 rounded-md appearance-none cursor-pointer border-none outline-none p-0 
+                        ${darkMode ? "bg-[#1e1e1e]" : "bg-white"}`}
                     style={{
                         WebkitAppearance: "none",
                         MozAppearance: "none",

@@ -5,11 +5,12 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 
-dotenv.config(); // ✅ Load .env
+dotenv.config();
 
 const app = express();
 app.use(cors());
 
+// frontend connection
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -19,14 +20,14 @@ const io = new Server(server, {
     }
 });
 
-// ====== MongoDB Setup ======
+// mango?
 const mongoURI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 3001;
 
 mongoose
     .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("✅ Connected to MongoDB"))
-    .catch((err) => console.error("❌ MongoDB connection error:", err));
+    .then(() => console.log(":) Connected to MongoDB"))
+    .catch((err) => console.error(":( MongoDB connection error:", err));
 
 const boardSchema = new mongoose.Schema({
     boardId: { type: String, required: true, unique: true },
@@ -34,19 +35,18 @@ const boardSchema = new mongoose.Schema({
 });
 const Board = mongoose.model("Board", boardSchema);
 
-// ====== Cache (for speed) ======
 const boardStates = {};
 
-// ====== Socket Events ======
+// sockets
 io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+    console.log("!! User connected:", socket.id);
 
-    // --- join board and load existing image ---
+    // join board
     socket.on("joinBoard", async (boardId) => {
         socket.join(boardId);
-        console.log(`User ${socket.id} joined board ${boardId}`);
+        console.log(`!-> User ${socket.id} joined board ${boardId}`);
 
-        // Prefer cache, fallback to DB
+        // checks cache, if not pulls from database
         if (boardStates[boardId]) {
             socket.emit("boardState", { image: boardStates[boardId] });
         } else {
@@ -57,24 +57,6 @@ io.on("connection", (socket) => {
             }
         }
     });
-
-    socket.on("joinBoard", async (boardId) => {
-        socket.join(boardId);
-        console.log(`User ${socket.id} joined board ${boardId}`);
-
-        // Check in-memory cache first
-        if (boardStates[boardId]) {
-            socket.emit("boardState", { image: boardStates[boardId] });
-        } else {
-            // Pull from MongoDB if not cached
-            const existing = await Board.findOne({ boardId });
-            if (existing && existing.image) {
-                boardStates[boardId] = existing.image;
-                socket.emit("boardState", { image: existing.image });
-            }
-        }
-    });
-
 
     // draw
     socket.on("draw", (data) => {
@@ -82,7 +64,7 @@ io.on("connection", (socket) => {
     });
 
 
-    // --- save and broadcast new image ---
+    // save
     socket.on("applyState", async ({ boardId, image }) => {
         if (!boardId || !image) return;
         boardStates[boardId] = image;
@@ -96,7 +78,7 @@ io.on("connection", (socket) => {
         socket.to(boardId).emit("boardState", { image });
     });
 
-    // --- clear board ---
+    // clear
     socket.on("clear", async (boardId) => {
         if (!boardId) return;
         boardStates[boardId] = "";
@@ -111,9 +93,9 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-        console.log(`User ${socket.id} disconnected`);
+        console.log(`## User ${socket.id} disconnected`);
     });
 });
 
-// ====== Start server ======
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// server start
+server.listen(PORT, () => console.log(`:) Server running on port ${PORT}`));
