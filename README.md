@@ -5,6 +5,9 @@ Persistent webpage at https://collab-whiteboard-493sz0zzz-t0asterbruhs-projects.
 
 (Requires a vercel account, and vercel likes to spin down inactive servers so it may take a second to launch!)
 
+Why?
+- Sometimes, pictures are a much better mode of communication than words, but pulling out a notebook and a camera or opening up MS Paint in order to show someone an idea over the internet can simply be far too cumbersome. Baordline solves this issue, by providing a fast and simple way to share drawings to anyone with an internet connection and a screen.
+
 Features
 
 - Real-time multi-user drawing
