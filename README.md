@@ -1,0 +1,36 @@
+Boardline
+
+A real-time, multi-user, collaborative drawing app built with React, Socket.IO, Node.js, and MongoDB Atlas.
+
+Features
+
+- Real-time multi-user drawing
+- Join or switch between shared rooms
+- Persistent canvas stored in MongoDB Atlas
+- Live stroke synchronization
+- Adjustable brush color & size
+- Light/Dark theme toggle
+
+Technologies
+
+Frontend
+
+- React
+- TailwindCSS
+- Socket.IO client
+
+Backend
+
+- Node.js
+- Express
+- Socket.IO server
+- Mongoose
+
+Database
+
+- MongoDB Atlas (cloud persistent)
+
+Hosting
+
+- Vercel (client)
+- Render (server)
