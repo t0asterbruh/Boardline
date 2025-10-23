@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
 // Point this to your server
-const socket = io("http://localhost:3001");
+const socket = io.connect("https://collab-whiteboard-l0qx.onrender.com");
 
 const CanvasBoard = ({ boardId }) => {
     const canvasRef = useRef(null);
