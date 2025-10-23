@@ -13,14 +13,16 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: ["https://collab-whiteboard-liart.vercel.app"],
         methods: ["GET", "POST"],
-    },
+        credentials: true
+    }
 });
 
 // ====== MongoDB Setup ======
 const mongoURI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => console.log("Server running"));
 
 mongoose
     .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })

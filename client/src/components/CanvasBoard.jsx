@@ -2,7 +2,10 @@ import React, { useRef, useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
 // Point this to your server
-const socket = io.connect(process.env.REACT_APP_SERVER_URL);
+const socket = io(process.env.REACT_APP_SERVER_URL, {
+    transports: ["websocket"],
+});
+
 
 const CanvasBoard = ({ boardId }) => {
     const canvasRef = useRef(null);
