@@ -325,6 +325,7 @@ const CanvasBoard = ({ boardId }) => {
                 <button onClick={() => setDarkMode(!darkMode)} className="px-2 py-1 bg-purple-500 rounded">
                     {darkMode ? "🌙" : "☀️"}
                 </button>
+                
                 <input
                     type="color"
                     value={color}
