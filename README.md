@@ -1,6 +1,7 @@
 Boardline
 
 A real-time, multi-user, collaborative drawing app built with React, Socket.IO, Node.js, and MongoDB Atlas.
+Persistent webpage at https://collab-whiteboard-493sz0zzz-t0asterbruhs-projects.vercel.app/ (does require a vercel account)
 
 Features
 
@@ -34,3 +35,6 @@ Hosting
 
 - Vercel (client)
 - Render (server)
+
+Author
+- Martin Dumbliauskas
